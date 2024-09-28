@@ -95,30 +95,48 @@ exports.addTrade = async (req, res) => {
   }
 };
 
-// Update an existing trade
+// Update an existing trade by tradeId
 exports.updateTrade = async (req, res) => {
-  const { id, quantity, price, date, type } = req.body;
-    console.log("this is the data of share--", id, quantity, price, date, type);
+    console.log("req body------", req.body);
     
-  try {
-    if(id == undefined){
-        res.status(400).json({success: false, error: "To update, Please provide ID of the stock"})
+    const { tradeId, quantity, price, date, type } = req.body;
+  
+    try {
+      if (tradeId == undefined) {
+        res.status(400).json({ success: false, error: "Please provide the trade ID to update" });
+        return;
+      }
+  
+      const trade = await Trade.findOneAndUpdate(
+        { tradeId: tradeId },
+        { quantity, price, date, type },
+        { new: true }
+      );
+  
+      if (!trade) {
+        return res.status(404).json({ success: false, error: "Trade not found" });
+      }
+  
+      res.json({ success: true, data: trade });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
     }
-    const trade = await Trade.findByIdAndUpdate(id, { quantity, price, date, type }, { new: true });
-    res.json({ success: true, data: trade });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-};
-
-// Remove an existing trade
+  };
+  
+// Remove an existing trade by tradeId
 exports.removeTrade = async (req, res) => {
-  const { id } = req.body;
-
-  try {
-    await Trade.findByIdAndDelete(id);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-};
+    const { tradeId } = req.body;
+  
+    try {
+      const trade = await Trade.findOneAndDelete({ tradeId: tradeId });
+  
+      if (!trade) {
+        return res.status(404).json({ success: false, error: "Trade not found" });
+      }
+  
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  };
+  
